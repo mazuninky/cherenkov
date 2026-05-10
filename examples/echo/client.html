@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cherenkov echo client</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+      }
+      body {
+        margin: 0;
+        padding: 0.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        height: 100vh;
+        box-sizing: border-box;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+      header h1 {
+        font-size: 1rem;
+        margin: 0;
+      }
+      header .status {
+        font-size: 0.85rem;
+        color: #888;
+      }
+      #log {
+        flex: 1;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        padding: 0.5rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.85rem;
+        white-space: pre-wrap;
+      }
+      .row {
+        display: flex;
+        gap: 0.5rem;
+      }
+      input,
+      button {
+        font: inherit;
+        padding: 0.4rem 0.6rem;
+        border: 1px solid #aaa;
+        border-radius: 4px;
+        background: transparent;
+        color: inherit;
+      }
+      input {
+        flex: 1;
+      }
+      .me {
+        color: #2a7;
+      }
+      .peer {
+        color: #57b;
+      }
+      .err {
+        color: #b33;
+      }
+      .meta {
+        color: #888;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1 id="title">client</h1>
+      <span class="status" id="status">connecting…</span>
+    </header>
+    <div id="log"></div>
+    <div class="row">
+      <input id="msg" placeholder="message" autofocus />
+      <button id="send" type="button">send</button>
+    </div>
+
+    <!--
+      Loaded as a plain <script>: no bundler, no SDK. The wire frames are
+      length-unprefixed Protobuf bodies; we hand-encode them with a tiny
+      varint helper instead of pulling in protobuf-ts. The TS SDK comes in M2.
+    -->
+    <script type="module">
+      const params = new URLSearchParams(location.search);
+      const nick = params.get("nick") || "anon";
+      const channel = params.get("channel") || "rooms.lobby";
+      document.getElementById("title").textContent = `${nick} @ ${channel}`;
+
+      const log = document.getElementById("log");
+      const status = document.getElementById("status");
+      const input = document.getElementById("msg");
+      const sendBtn = document.getElementById("send");
+
+      function append(line, cls) {
+        const node = document.createElement("div");
+        node.textContent = line;
+        if (cls) node.className = cls;
+        log.appendChild(node);
+        log.scrollTop = log.scrollHeight;
+      }
+
+      // Minimal protobuf varint + tag/wire helpers, hand-rolled to keep the
+      // demo dependency-free. A real client would use protobuf-ts or our
+      // own M2-era TS SDK.
+      function writeVarint(buf, value) {
+        while (value >= 0x80) {
+          buf.push((value & 0x7f) | 0x80);
+          value = Math.floor(value / 128);
+        }
+        buf.push(value & 0x7f);
+      }
+
+      function readVarint(view, offset) {
+        let value = 0;
+        let shift = 0;
+        let byte;
+        do {
+          byte = view.getUint8(offset++);
+          value += (byte & 0x7f) * 2 ** shift;
+          shift += 7;
+        } while (byte & 0x80);
+        return [value, offset];
+      }
+
+      function tag(field, wire) {
+        return field * 8 + wire;
+      }
+
+      function encodeString(buf, field, value) {
+        const utf8 = new TextEncoder().encode(value);
+        writeVarint(buf, tag(field, 2));
+        writeVarint(buf, utf8.length);
+        for (const b of utf8) buf.push(b);
+      }
+
+      function encodeUint64(buf, field, value) {
+        if (value === 0) return;
+        writeVarint(buf, tag(field, 0));
+        writeVarint(buf, value);
+      }
+
+      function encodeBytes(buf, field, value) {
+        writeVarint(buf, tag(field, 2));
+        writeVarint(buf, value.length);
+        for (const b of value) buf.push(b);
+      }
+
+      function encodeMessage(buf, field, body) {
+        writeVarint(buf, tag(field, 2));
+        writeVarint(buf, body.length);
+        for (const b of body) buf.push(b);
+      }
+
+      function buildSubscribe(requestId, ch) {
+        const inner = [];
+        encodeUint64(inner, 1, requestId);
+        encodeString(inner, 2, ch);
+        const outer = [];
+        encodeMessage(outer, 1, inner);
+        return new Uint8Array(outer);
+      }
+
+      function buildPublish(requestId, ch, data) {
+        const inner = [];
+        encodeUint64(inner, 1, requestId);
+        encodeString(inner, 2, ch);
+        encodeBytes(inner, 3, data);
+        const outer = [];
+        encodeMessage(outer, 3, inner);
+        return new Uint8Array(outer);
+      }
+
+      // Decode the incoming server frame. We accept whatever the server sends
+      // and only render Publication payloads; ack frames are noted in the
+      // status line.
+      function decodeServerFrame(bytes) {
+        const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+        let offset = 0;
+        if (offset >= bytes.length) return { kind: "empty" };
+        const [outerTag, after] = readVarint(view, offset);
+        offset = after;
+        const wire = outerTag & 7;
+        const field = Math.floor(outerTag / 8);
+        if (wire !== 2) return { kind: "unknown" };
+        const [len, afterLen] = readVarint(view, offset);
+        offset = afterLen;
+        const body = bytes.subarray(offset, offset + len);
+        return { kind: "frame", field, body };
+      }
+
+      function decodePublication(body) {
+        const view = new DataView(body.buffer, body.byteOffset, body.byteLength);
+        let offset = 0;
+        let channel = "";
+        let publicationOffset = 0;
+        let data = new Uint8Array();
+        while (offset < body.length) {
+          const [t, a] = readVarint(view, offset);
+          offset = a;
+          const wire = t & 7;
+          const field = Math.floor(t / 8);
+          if (field === 1 && wire === 2) {
+            const [l, al] = readVarint(view, offset);
+            offset = al;
+            channel = new TextDecoder().decode(body.subarray(offset, offset + l));
+            offset += l;
+          } else if (field === 2 && wire === 0) {
+            const [v, av] = readVarint(view, offset);
+            offset = av;
+            publicationOffset = v;
+          } else if (field === 3 && wire === 2) {
+            const [l, al] = readVarint(view, offset);
+            offset = al;
+            data = body.subarray(offset, offset + l);
+            offset += l;
+          } else {
+            break;
+          }
+        }
+        return { channel, offset: publicationOffset, data };
+      }
+
+      const url = `ws://${location.hostname || "127.0.0.1"}:7000/connect/v1`;
+      const ws = new WebSocket(url);
+      ws.binaryType = "arraybuffer";
+      let nextRequestId = 1;
+
+      ws.addEventListener("open", () => {
+        status.textContent = "connected";
+        ws.send(buildSubscribe(nextRequestId++, channel));
+        append(`subscribed to ${channel}`, "meta");
+      });
+
+      ws.addEventListener("close", () => {
+        status.textContent = "closed";
+      });
+
+      ws.addEventListener("error", () => {
+        status.textContent = "error";
+        append("connection error", "err");
+      });
+
+      ws.addEventListener("message", (event) => {
+        const bytes = new Uint8Array(event.data);
+        const frame = decodeServerFrame(bytes);
+        if (frame.kind !== "frame") return;
+        switch (frame.field) {
+          case 1:
+            append("subscribe ok", "meta");
+            break;
+          case 2:
+            append("unsubscribe ok", "meta");
+            break;
+          case 3: {
+            const pub = decodePublication(frame.body);
+            const text = new TextDecoder().decode(pub.data);
+            append(`<- @${pub.offset} ${text}`, "peer");
+            break;
+          }
+          case 4:
+            append("error frame", "err");
+            break;
+          default:
+            append(`unknown frame field=${frame.field}`, "meta");
+        }
+      });
+
+      function send() {
+        const text = input.value.trim();
+        if (!text) return;
+        const data = new TextEncoder().encode(`${nick}: ${text}`);
+        ws.send(buildPublish(nextRequestId++, channel, data));
+        append(`-> ${text}`, "me");
+        input.value = "";
+      }
+
+      sendBtn.addEventListener("click", send);
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") send();
+      });
+    </script>
+  </body>
+</html>

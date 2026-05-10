@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cherenkov admin</title>
+<style>
+  body { font: 14px/1.5 system-ui, sans-serif; max-width: 720px; margin: 2em auto; padding: 0 1em; color: #1a1a1a; }
+  h1 { font-size: 1.4em; margin-top: 0; }
+  pre { background: #f3f3f3; padding: 1em; overflow-x: auto; border-radius: 4px; }
+  .row { display: flex; gap: .5em; margin: .5em 0; }
+  input { flex: 1; padding: .35em .5em; }
+  button { padding: .35em .8em; }
+  .status { color: #666; font-size: .9em; }
+</style>
+</head>
+<body>
+<h1>Cherenkov admin</h1>
+<p class="status" id="status">loading...</p>
+
+<h2>Health</h2>
+<pre id="health">—</pre>
+
+<h2>Channel subscribers</h2>
+<div class="row">
+  <input id="channel" type="text" placeholder="rooms.lobby" value="rooms.lobby" />
+  <button id="lookup">Look up</button>
+</div>
+<pre id="subscribers">—</pre>
+
+<script>
+async function getJSON(path) {
+  const r = await fetch(path, { headers: { Accept: 'application/json' } });
+  return r.json();
+}
+async function refresh() {
+  try {
+    const h = await getJSON('/admin/v1/health');
+    document.getElementById('health').textContent = JSON.stringify(h, null, 2);
+    document.getElementById('status').textContent = 'sessions: ' + h.sessions;
+  } catch (e) {
+    document.getElementById('status').textContent = 'health failed: ' + e;
+  }
+}
+async function lookup() {
+  const ch = document.getElementById('channel').value;
+  const j = await getJSON('/admin/v1/channels/' + encodeURIComponent(ch) + '/subscribers');
+  document.getElementById('subscribers').textContent = JSON.stringify(j, null, 2);
+}
+document.getElementById('lookup').addEventListener('click', lookup);
+refresh();
+setInterval(refresh, 5000);
+</script>
+</body>
+</html>

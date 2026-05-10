@@ -1,0 +1,36 @@
+[package]
+name = "cherenkov-channel-crdt"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "CRDT channel kinds (Y.js via yrs, Automerge) for Cherenkov."
+
+[features]
+default = ["yjs", "automerge"]
+yjs = ["dep:yrs"]
+automerge = ["dep:automerge"]
+
+[dependencies]
+cherenkov-core.workspace = true
+cherenkov-protocol.workspace = true
+async-trait.workspace = true
+bytes.workspace = true
+dashmap.workspace = true
+parking_lot.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+yrs = { workspace = true, optional = true }
+automerge = { workspace = true, optional = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
+
+[lints.rust]
+missing_docs = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }

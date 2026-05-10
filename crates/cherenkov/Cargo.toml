@@ -1,0 +1,59 @@
+[package]
+name = "cherenkov"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+description = "Facade crate re-exporting Cherenkov public APIs."
+
+[features]
+default = ["pubsub", "ws", "schema"]
+pubsub = ["dep:cherenkov-channel-pubsub"]
+ws = ["dep:cherenkov-transport-ws"]
+sse = ["dep:cherenkov-transport-sse"]
+wt = ["dep:cherenkov-transport-wt"]
+schema = ["dep:cherenkov-schema"]
+auth = ["dep:cherenkov-auth"]
+crdt = ["dep:cherenkov-channel-crdt"]
+broker-memory = ["dep:cherenkov-broker"]
+broker-redis = ["dep:cherenkov-broker-redis"]
+broker-nats = ["dep:cherenkov-broker-nats"]
+admin = ["dep:cherenkov-admin"]
+full = [
+    "pubsub",
+    "ws",
+    "sse",
+    "wt",
+    "schema",
+    "auth",
+    "crdt",
+    "broker-memory",
+    "broker-redis",
+    "broker-nats",
+    "admin",
+]
+
+[dependencies]
+cherenkov-core.workspace = true
+cherenkov-protocol.workspace = true
+cherenkov-channel-pubsub = { workspace = true, optional = true }
+cherenkov-channel-crdt = { workspace = true, optional = true }
+cherenkov-transport-ws = { workspace = true, optional = true }
+cherenkov-transport-sse = { workspace = true, optional = true }
+cherenkov-transport-wt = { workspace = true, optional = true }
+cherenkov-schema = { workspace = true, optional = true }
+cherenkov-auth = { workspace = true, optional = true }
+cherenkov-broker = { workspace = true, optional = true }
+cherenkov-broker-redis = { workspace = true, optional = true }
+cherenkov-broker-nats = { workspace = true, optional = true }
+cherenkov-admin = { workspace = true, optional = true }
+
+[lints.rust]
+missing_docs = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }

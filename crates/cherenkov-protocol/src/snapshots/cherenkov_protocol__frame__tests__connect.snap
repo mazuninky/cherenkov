@@ -1,0 +1,20 @@
+---
+source: crates/cherenkov-protocol/src/frame.rs
+assertion_line: 636
+expression: bytes.as_ref()
+---
+[
+    34,
+    11,
+    8,
+    13,
+    18,
+    7,
+    116,
+    111,
+    107,
+    45,
+    97,
+    98,
+    99,
+]

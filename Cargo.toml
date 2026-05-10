@@ -1,0 +1,128 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/cherenkov",
+    "crates/cherenkov-protocol",
+    "crates/cherenkov-core",
+    "crates/cherenkov-schema",
+    "crates/cherenkov-transport-ws",
+    "crates/cherenkov-transport-wt",
+    "crates/cherenkov-transport-sse",
+    "crates/cherenkov-channel-pubsub",
+    "crates/cherenkov-channel-crdt",
+    "crates/cherenkov-broker",
+    "crates/cherenkov-broker-redis",
+    "crates/cherenkov-broker-nats",
+    "crates/cherenkov-auth",
+    "crates/cherenkov-admin",
+    "crates/cherenkov-server",
+    "crates/cherenkov-sdk-ts",
+    "crates/cherenkov-test-support",
+    "benches",
+]
+
+[workspace.package]
+version = "0.0.1-alpha.0"
+edition = "2021"
+rust-version = "1.88"
+license = "MIT"
+repository = "https://github.com/mazuninky/cherenkov"
+homepage = "https://cherenkov.dev"
+authors = ["Konstantin Mazunin <mazuninky@gmail.com>"]
+readme = "README.md"
+
+[workspace.dependencies]
+# Workspace crates -- pinned by path so a single `cargo build --workspace`
+# uses the in-tree sources rather than crates.io publications.
+cherenkov-protocol = { path = "crates/cherenkov-protocol", version = "0.0.1-alpha.0" }
+cherenkov-core = { path = "crates/cherenkov-core", version = "0.0.1-alpha.0" }
+cherenkov-schema = { path = "crates/cherenkov-schema", version = "0.0.1-alpha.0" }
+cherenkov-broker = { path = "crates/cherenkov-broker", version = "0.0.1-alpha.0" }
+cherenkov-channel-pubsub = { path = "crates/cherenkov-channel-pubsub", version = "0.0.1-alpha.0" }
+cherenkov-transport-ws = { path = "crates/cherenkov-transport-ws", version = "0.0.1-alpha.0" }
+cherenkov-test-support = { path = "crates/cherenkov-test-support", version = "0.0.1-alpha.0" }
+cherenkov-auth = { path = "crates/cherenkov-auth", version = "0.0.1-alpha.0" }
+cherenkov-channel-crdt = { path = "crates/cherenkov-channel-crdt", version = "0.0.1-alpha.0" }
+cherenkov-transport-wt = { path = "crates/cherenkov-transport-wt", version = "0.0.1-alpha.0" }
+cherenkov-transport-sse = { path = "crates/cherenkov-transport-sse", version = "0.0.1-alpha.0" }
+cherenkov-broker-redis = { path = "crates/cherenkov-broker-redis", version = "0.0.1-alpha.0" }
+cherenkov-broker-nats = { path = "crates/cherenkov-broker-nats", version = "0.0.1-alpha.0" }
+cherenkov-admin = { path = "crates/cherenkov-admin", version = "0.0.1-alpha.0" }
+
+# Runtime / core (docs/plan.md §3.1)
+tokio = { version = "1", features = ["full"] }
+async-trait = "0.1"
+bytes = "1"
+dashmap = "6"
+arc-swap = "1"
+parking_lot = "0.12"
+thiserror = "2"
+anyhow = "1"
+futures = "0.3"
+futures-util = "0.3"
+tokio-stream = { version = "0.1", features = ["sync"] }
+pin-project-lite = "0.2"
+
+# Wire protocol (docs/plan.md §3.2)
+prost = "0.13"
+prost-build = "0.13"
+prost-types = "0.13"
+
+# Transports (docs/plan.md §3.3)
+axum = { version = "0.7", features = ["ws"] }
+tokio-tungstenite = "0.24"
+tower = "0.5"
+http = "1"
+http-body-util = "0.1"
+wtransport = "0.7"
+async-stream = "0.3"
+base64 = "0.22"
+
+# Configuration (docs/plan.md §3.9)
+figment = { version = "0.10", features = ["yaml", "env"] }
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"
+serde_json = "1"
+
+# Schemas (docs/plan.md §3.6)
+jsonschema = { version = "0.28", default-features = false }
+
+# Auth (docs/plan.md §3.7)
+jsonwebtoken = "9"
+globset = "0.4"
+
+# CRDT engines (docs/plan.md §3.4)
+yrs = "0.21"
+automerge = "0.5"
+
+# Brokers (docs/plan.md §3.5)
+fred = { version = "10", default-features = false, features = ["i-pubsub", "subscriber-client"] }
+async-nats = "0.48"
+
+# CLI / observability (docs/plan.md §3.8)
+clap = { version = "4", features = ["derive", "env"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json", "env-filter", "fmt"] }
+metrics = "0.24"
+metrics-exporter-prometheus = { version = "0.16", default-features = false }
+
+# Tests (docs/plan.md §3.10)
+proptest = "1"
+insta = { version = "1", features = ["yaml"] }
+tokio-test = "0.4"
+tempfile = "3"
+
+# Build helpers
+protoc-bin-vendored = "3"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+panic = "unwind"
+debug = "line-tables-only"
+
+[profile.dev]
+opt-level = 0
+
+[profile.test]
+opt-level = 0

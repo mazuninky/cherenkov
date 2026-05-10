@@ -1,0 +1,32 @@
+[package]
+name = "cherenkov-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Hub, Session registry, and the pluggable extension traits (ChannelKind, Transport, Broker) for Cherenkov."
+
+[dependencies]
+cherenkov-protocol.workspace = true
+arc-swap.workspace = true
+async-trait.workspace = true
+bytes.workspace = true
+dashmap.workspace = true
+futures.workspace = true
+metrics.workspace = true
+parking_lot.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true }
+tracing.workspace = true
+
+[dev-dependencies]
+tokio-test.workspace = true
+
+[lints.rust]
+missing_docs = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }

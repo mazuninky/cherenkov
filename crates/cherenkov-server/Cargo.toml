@@ -1,0 +1,59 @@
+[package]
+name = "cherenkov-server"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Cherenkov server binary: composes Hub with default transports, channel kinds, and broker."
+
+[[bin]]
+name = "cherenkov-server"
+path = "src/main.rs"
+
+[dependencies]
+cherenkov-admin.workspace = true
+cherenkov-auth.workspace = true
+cherenkov-broker.workspace = true
+cherenkov-broker-nats.workspace = true
+cherenkov-broker-redis.workspace = true
+cherenkov-channel-crdt.workspace = true
+cherenkov-channel-pubsub.workspace = true
+cherenkov-core.workspace = true
+cherenkov-protocol.workspace = true
+cherenkov-schema.workspace = true
+cherenkov-transport-sse.workspace = true
+cherenkov-transport-ws.workspace = true
+anyhow.workspace = true
+clap.workspace = true
+futures.workspace = true
+metrics.workspace = true
+metrics-exporter-prometheus.workspace = true
+figment.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true }
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[dev-dependencies]
+base64 = { workspace = true }
+bytes.workspace = true
+futures.workspace = true
+jsonwebtoken.workspace = true
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream", "json"] }
+serde_json.workspace = true
+tempfile.workspace = true
+tokio-tungstenite = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+yrs.workspace = true
+
+[lints.rust]
+missing_docs = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }

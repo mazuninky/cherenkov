@@ -1,0 +1,56 @@
+# cargo-deny configuration.
+#
+# See `docs/plan.md` §8.1: GPL/AGPL/SSPL are incompatible with our MIT
+# licence; yanked versions and unmaintained advisories are blocked.
+
+[graph]
+all-features = true
+
+[advisories]
+version = 2
+# RUSTSEC-2025-0057 (fxhash unmaintained) is transitive via automerge with
+# no upstream fix. Tracked in docs/postmortems; revisit when automerge
+# upgrades to rustc-hash.
+ignore = ["RUSTSEC-2025-0057"]
+yanked = "deny"
+
+[licenses]
+version = 2
+allow = [
+    "MIT",
+    "MIT-0",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "Zlib",
+    "CC0-1.0",
+    "MPL-2.0",
+    "OpenSSL",
+    # CDLA-Permissive-2.0 is the license used by `webpki-roots` for
+    # CA root certificate data sourced from the Common CA Database
+    # (CCADB). It is permissive, allows redistribution without
+    # attribution, and is compatible with commercial use.
+    "CDLA-Permissive-2.0",
+]
+confidence-threshold = 0.93
+
+[[licenses.exceptions]]
+allow = ["OpenSSL"]
+name = "ring"
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+deny = []
+skip = []
+skip-tree = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []

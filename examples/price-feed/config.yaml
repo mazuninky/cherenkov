@@ -1,0 +1,44 @@
+# Cherenkov price-feed demo configuration.
+#
+# `cargo run -p cherenkov-server -- --config examples/price-feed/config.yaml`
+# boots a single-node hub on 127.0.0.1:7000 with the v1 WebSocket transport
+# at /connect/v1.
+#
+# The `prices.*` namespace is gated by a JSON Schema so malformed ticks are
+# rejected at the hub before the broker fans them out — see
+# docs/adr/0003-schema-as-contract.md for the rationale.
+
+transport:
+  ws:
+    listen: "127.0.0.1:7000"
+    path: "/connect/v1"
+    outbox_capacity: 256
+
+broker:
+  capacity: 1024
+
+channel_pubsub:
+  history_size: 256
+  history_ttl_seconds: 60
+
+namespaces:
+  prices:
+    kind: "json-schema"
+    schema:
+      type: "object"
+      required: ["symbol", "price", "ts"]
+      additionalProperties: false
+      properties:
+        symbol:
+          type: "string"
+          minLength: 1
+        price:
+          type: "number"
+          exclusiveMinimum: 0
+        ts:
+          type: "integer"
+          minimum: 0
+
+log:
+  level: "info,cherenkov_server=debug,cherenkov_transport_ws=debug"
+  format: "pretty"
