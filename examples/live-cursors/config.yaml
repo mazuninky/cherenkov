@@ -1,0 +1,25 @@
+# Cherenkov live-cursors demo configuration.
+#
+# `cargo run -p cherenkov-server -- --config examples/live-cursors/config.yaml`
+# boots a single-node hub on 127.0.0.1:7000.
+#
+# `cursors.*` is left opaque (no schema): the JSON payload is small enough
+# that schema validation would only add latency. The publish rate is the
+# interesting load characteristic, not the per-message validation.
+
+transport:
+  ws:
+    listen: "127.0.0.1:7000"
+    path: "/connect/v1"
+    outbox_capacity: 1024
+
+broker:
+  capacity: 4096
+
+channel_pubsub:
+  history_size: 8
+  history_ttl_seconds: 5
+
+log:
+  level: "info,cherenkov_server=debug,cherenkov_transport_ws=debug"
+  format: "pretty"

@@ -1,0 +1,37 @@
+# Rust build artefacts
+/target/
+**/*.rs.bk
+Cargo.lock.bak
+
+# IDE / editor scratch
+/.idea/
+/.vscode/
+*.iml
+*.swp
+*.swo
+.DS_Store
+
+# Profiling / coverage outputs
+/perf.data*
+/flamegraph.svg
+/coverage/
+/tarpaulin-report.html
+*.profraw
+*.profdata
+
+# Local-fix / CodeRabbit review artefacts. They embed local absolute
+# paths and the user's name in metadata fields, so they must never be
+# committed; the workflow regenerates them on every run.
+/.claude/local-fix-*.jsonl
+/.claude/local-fix-*.log
+
+# Secrets — never commit these. CI runs gitleaks; this list is the
+# defence-in-depth layer (per docs/plan.md §8.10).
+*.pem
+*.key
+*.p12
+*.pfx
+.env
+.env.*
+!.env.example
+secrets/

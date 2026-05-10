@@ -1,0 +1,37 @@
+[package]
+name = "cherenkov-benches"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+publish = false
+description = "Workspace-level criterion benchmarks for Cherenkov."
+
+[lints.rust]
+missing_docs = "allow"
+
+[dependencies]
+cherenkov-protocol.workspace = true
+cherenkov-core.workspace = true
+cherenkov-broker.workspace = true
+cherenkov-channel-pubsub.workspace = true
+cherenkov-schema.workspace = true
+bytes.workspace = true
+tokio = { workspace = true }
+serde_json.workspace = true
+
+[dev-dependencies]
+criterion = { version = "0.5", default-features = false, features = ["cargo_bench_support", "async_tokio"] }
+
+[[bench]]
+name = "protocol_codec"
+harness = false
+
+[[bench]]
+name = "hub_pubsub"
+harness = false
+
+[[bench]]
+name = "schema_validate"
+harness = false

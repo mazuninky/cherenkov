@@ -1,0 +1,45 @@
+# Cherenkov echo demo configuration.
+#
+# `cargo run -p cherenkov-server -- --config examples/echo/config.yaml` boots
+# a single-node hub that serves WebSocket on 127.0.0.1:7000 and exposes the
+# pub/sub channel kind under /connect/v1.
+
+transport:
+  ws:
+    listen: "127.0.0.1:7000"
+    path: "/connect/v1"
+    outbox_capacity: 256
+
+broker:
+  capacity: 256
+
+channel_pubsub:
+  history_size: 64
+  history_ttl_seconds: 300
+
+# Schema-as-contract demo (docs/adr/0003-schema-as-contract.md).
+#
+# `rooms.*` is intentionally left undeclared so the M1 echo demo (raw
+# strings between two iframes) keeps working — no schema means opaque
+# pass-through.
+#
+# `orders.*` carries a JSON Schema; publications that do not match are
+# rejected before reaching the broker, with a wire-protocol Error frame
+# whose code is `ValidationFailed (5)`.
+namespaces:
+  orders:
+    kind: "json-schema"
+    schema:
+      type: "object"
+      required: ["sku", "qty"]
+      properties:
+        sku:
+          type: "string"
+          minLength: 1
+        qty:
+          type: "integer"
+          minimum: 1
+
+log:
+  level: "info,cherenkov_server=debug,cherenkov_transport_ws=debug"
+  format: "pretty"

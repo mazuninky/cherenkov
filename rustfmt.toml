@@ -1,0 +1,8 @@
+edition = "2021"
+max_width = 100
+newline_style = "Unix"
+use_field_init_shorthand = true
+# `imports_granularity = "Module"` and `group_imports = "StdExternalCrate"`
+# are nightly-only rustfmt features and emit warnings on stable. Once we
+# adopt nightly fmt in CI we can re-enable them; until then, follow the
+# convention manually in code reviews per docs/plan.md §4.8.

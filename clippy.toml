@@ -1,0 +1,4 @@
+avoid-breaking-exported-api = false
+cognitive-complexity-threshold = 25
+too-many-lines-threshold = 200
+doc-valid-idents = ["WebSocket", "WebTransport", "JSON", "YAML", "JWT", "TLS", "URL", "HTTP", "HTTPS", "TCP", "UDP", "QUIC", "Cherenkov", "AsyncAPI", "TypeScript", "JavaScript", "CRDT", "CRDTs", "Protobuf", "PubSub", "MIT", "OAuth"]

@@ -1,0 +1,112 @@
+// Cherenkov wire protocol, version v1.
+//
+// Stability: pre-0.1.0. Tag numbers are stable from this point forward;
+// changes go through an ADR per docs/plan.md §2.5.
+//
+// Conventions:
+//   * Every change-of-contract message is a oneof variant of either
+//     ClientFrame or ServerFrame. Adding a new variant is backwards
+//     compatible. Removing or repurposing a variant is forbidden inside v1.
+//   * `data` fields carry user payloads as opaque bytes. The server treats
+//     them as Bytes and never logs them (see docs/plan.md §8.7).
+
+syntax = "proto3";
+
+package cherenkov.v1;
+
+// Top-level frame the client sends to the server.
+message ClientFrame {
+  oneof kind {
+    Subscribe subscribe = 1;
+    Unsubscribe unsubscribe = 2;
+    Publish publish = 3;
+    Connect connect = 4;
+  }
+}
+
+// Top-level frame the server sends to the client.
+message ServerFrame {
+  oneof kind {
+    SubscribeOk subscribe_ok = 1;
+    UnsubscribeOk unsubscribe_ok = 2;
+    Publication publication = 3;
+    Error error = 4;
+    ConnectOk connect_ok = 5;
+  }
+}
+
+// Connect (authenticate) the session. When the server is configured with an
+// authenticator other than allow-all, every other ClientFrame is rejected
+// with `NotConnected (8)` until a successful Connect.
+message Connect {
+  uint64 request_id = 1;
+  string token = 2;
+}
+
+// Acknowledgement for a successful Connect. `subject` is the authenticated
+// principal (typically the JWT `sub` claim); `expires_at` is the Unix
+// timestamp at which the credential expires (0 == no expiry known).
+message ConnectOk {
+  uint64 request_id = 1;
+  string subject = 2;
+  uint64 expires_at = 3;
+}
+
+// Subscribe to `channel`. The optional `request_id` is echoed back in the
+// matching SubscribeOk so the client can correlate request and response.
+//
+// `since_offset`, when present (non-zero), asks the server to replay any
+// retained publications with `offset > since_offset` before resuming the
+// live stream. Channel kinds without a history layer ignore the field;
+// channels whose history has been evicted by TTL or size return
+// SubscribeOk with the current cursor and skip the replay.
+message Subscribe {
+  uint64 request_id = 1;
+  string channel = 2;
+  uint64 since_offset = 3;
+}
+
+// Unsubscribe from `channel`. The server replies with UnsubscribeOk on the
+// same `request_id`.
+message Unsubscribe {
+  uint64 request_id = 1;
+  string channel = 2;
+}
+
+// Publish opaque `data` into `channel`. The optional `request_id` is echoed
+// in any error response.
+message Publish {
+  uint64 request_id = 1;
+  string channel = 2;
+  bytes data = 3;
+}
+
+// Acknowledgement for a successful Subscribe. The `epoch` and `offset`
+// describe the channel's history cursor at the moment of subscription.
+// At M1, recovery and replay are out of scope: the cursor is informational.
+message SubscribeOk {
+  uint64 request_id = 1;
+  string channel = 2;
+  uint64 epoch = 3;
+  uint64 offset = 4;
+}
+
+// Acknowledgement for a successful Unsubscribe.
+message UnsubscribeOk {
+  uint64 request_id = 1;
+  string channel = 2;
+}
+
+// A publication delivered to a subscriber.
+message Publication {
+  string channel = 1;
+  uint64 offset = 2;
+  bytes data = 3;
+}
+
+// An error reply tied to a `request_id` (when applicable).
+message Error {
+  uint64 request_id = 1;
+  uint32 code = 2;
+  string message = 3;
+}

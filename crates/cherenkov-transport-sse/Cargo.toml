@@ -1,0 +1,36 @@
+[package]
+name = "cherenkov-transport-sse"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Server-Sent Events transport for Cherenkov."
+
+[dependencies]
+cherenkov-core.workspace = true
+cherenkov-protocol.workspace = true
+async-stream.workspace = true
+async-trait.workspace = true
+axum.workspace = true
+bytes.workspace = true
+futures.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true }
+tokio-stream.workspace = true
+tracing.workspace = true
+base64.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+http-body-util.workspace = true
+tower.workspace = true
+
+[lints.rust]
+missing_docs = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }

@@ -1,0 +1,11 @@
+# Workspace-level cargo configuration.
+#
+# Profile and registry settings live alongside per-crate Cargo.toml; this file
+# only contains overrides that are meaningful for everyone running `cargo`
+# inside the workspace.
+
+[build]
+# Keep colored output behaviour consistent with CI.
+
+[net]
+git-fetch-with-cli = true

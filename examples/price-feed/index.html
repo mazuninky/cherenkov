@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cherenkov price feed</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+      }
+      body {
+        margin: 0;
+        padding: 1rem;
+        display: grid;
+        grid-template-columns: minmax(280px, 1fr) 2fr;
+        gap: 1rem;
+        min-height: 100vh;
+        box-sizing: border-box;
+      }
+      h1 {
+        grid-column: 1 / -1;
+        margin: 0;
+        font-size: 1.25rem;
+      }
+      section {
+        border: 1px solid #888;
+        border-radius: 8px;
+        padding: 0.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+      header h2 {
+        margin: 0;
+        font-size: 1rem;
+      }
+      .status {
+        font-size: 0.85rem;
+        color: #888;
+      }
+      button {
+        font: inherit;
+        padding: 0.3rem 0.6rem;
+        border: 1px solid #aaa;
+        border-radius: 4px;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-variant-numeric: tabular-nums;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.3rem 0.5rem;
+        border-bottom: 1px solid #444;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.9rem;
+      }
+      th {
+        font-weight: 600;
+      }
+      td.right {
+        text-align: right;
+      }
+      .up {
+        color: #2a7;
+      }
+      .down {
+        color: #b33;
+      }
+      svg {
+        width: 100%;
+        height: 30px;
+        display: block;
+      }
+      .meta {
+        color: #888;
+        font-size: 0.85rem;
+      }
+      .err {
+        color: #b33;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Cherenkov price feed — schema-validated ticks</h1>
+
+    <section>
+      <header>
+        <h2>Publisher</h2>
+        <span class="status" id="pub-status">idle</span>
+      </header>
+      <div>
+        <button id="start" type="button">start ticking</button>
+        <button id="stop" type="button" disabled>stop</button>
+        <button id="bad" type="button" title="publish a malformed tick — server should reject with code 5">
+          publish invalid
+        </button>
+      </div>
+      <p class="meta">
+        Synthesises BTC/ETH price ticks every 250&nbsp;ms and publishes them
+        to <code>prices.btcusd</code> / <code>prices.ethusd</code>. The
+        "publish invalid" button sends a tick missing the <code>price</code>
+        field; the server should reply with an <code>Error</code> frame
+        carrying <code>code = 5 (ValidationFailed)</code>.
+      </p>
+      <div id="pub-log" class="meta"></div>
+    </section>
+
+    <section>
+      <header>
+        <h2>Live ticks</h2>
+        <span class="status" id="sub-status">connecting…</span>
+      </header>
+      <table>
+        <thead>
+          <tr>
+            <th>symbol</th>
+            <th class="right">last</th>
+            <th class="right">offset</th>
+            <th>spark</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </section>
+
+    <!--
+      Hand-rolled protobuf encoder/decoder, identical in spirit to
+      examples/echo/client.html. The TS SDK (M2 follow-up) will replace
+      this with typed builders.
+    -->
+    <script type="module">
+      function writeVarint(buf, value) {
+        while (value >= 0x80) {
+          buf.push((value & 0x7f) | 0x80);
+          value = Math.floor(value / 128);
+        }
+        buf.push(value & 0x7f);
+      }
+      function readVarint(view, offset) {
+        let value = 0;
+        let shift = 0;
+        let byte;
+        do {
+          byte = view.getUint8(offset++);
+          value += (byte & 0x7f) * 2 ** shift;
+          shift += 7;
+        } while (byte & 0x80);
+        return [value, offset];
+      }
+      const tag = (field, wire) => field * 8 + wire;
+      function encodeString(buf, field, value) {
+        const utf8 = new TextEncoder().encode(value);
+        writeVarint(buf, tag(field, 2));
+        writeVarint(buf, utf8.length);
+        for (const b of utf8) buf.push(b);
+      }
+      function encodeUint64(buf, field, value) {
+        if (value === 0) return;
+        writeVarint(buf, tag(field, 0));
+        writeVarint(buf, value);
+      }
+      function encodeBytes(buf, field, value) {
+        writeVarint(buf, tag(field, 2));
+        writeVarint(buf, value.length);
+        for (const b of value) buf.push(b);
+      }
+      function encodeMessage(buf, field, body) {
+        writeVarint(buf, tag(field, 2));
+        writeVarint(buf, body.length);
+        for (const b of body) buf.push(b);
+      }
+      function buildSubscribe(requestId, ch) {
+        const inner = [];
+        encodeUint64(inner, 1, requestId);
+        encodeString(inner, 2, ch);
+        const outer = [];
+        encodeMessage(outer, 1, inner);
+        return new Uint8Array(outer);
+      }
+      function buildPublish(requestId, ch, data) {
+        const inner = [];
+        encodeUint64(inner, 1, requestId);
+        encodeString(inner, 2, ch);
+        encodeBytes(inner, 3, data);
+        const outer = [];
+        encodeMessage(outer, 3, inner);
+        return new Uint8Array(outer);
+      }
+      function decodeServerFrame(bytes) {
+        const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+        if (bytes.length === 0) return { kind: "empty" };
+        const [outerTag, after] = readVarint(view, 0);
+        const wire = outerTag & 7;
+        const field = Math.floor(outerTag / 8);
+        if (wire !== 2) return { kind: "unknown" };
+        const [len, afterLen] = readVarint(view, after);
+        return { kind: "frame", field, body: bytes.subarray(afterLen, afterLen + len) };
+      }
+      function decodePublication(body) {
+        const view = new DataView(body.buffer, body.byteOffset, body.byteLength);
+        let offset = 0;
+        let channel = "";
+        let publicationOffset = 0;
+        let data = new Uint8Array();
+        while (offset < body.length) {
+          const [t, a] = readVarint(view, offset);
+          offset = a;
+          const wire = t & 7;
+          const field = Math.floor(t / 8);
+          if (field === 1 && wire === 2) {
+            const [l, al] = readVarint(view, offset);
+            offset = al;
+            channel = new TextDecoder().decode(body.subarray(offset, offset + l));
+            offset += l;
+          } else if (field === 2 && wire === 0) {
+            const [v, av] = readVarint(view, offset);
+            offset = av;
+            publicationOffset = v;
+          } else if (field === 3 && wire === 2) {
+            const [l, al] = readVarint(view, offset);
+            offset = al;
+            data = body.subarray(offset, offset + l);
+            offset += l;
+          } else break;
+        }
+        return { channel, offset: publicationOffset, data };
+      }
+      function decodeError(body) {
+        const view = new DataView(body.buffer, body.byteOffset, body.byteLength);
+        let offset = 0;
+        let requestId = 0;
+        let code = 0;
+        let message = "";
+        while (offset < body.length) {
+          const [t, a] = readVarint(view, offset);
+          offset = a;
+          const wire = t & 7;
+          const field = Math.floor(t / 8);
+          if (field === 1 && wire === 0) {
+            const [v, av] = readVarint(view, offset);
+            offset = av;
+            requestId = v;
+          } else if (field === 2 && wire === 0) {
+            const [v, av] = readVarint(view, offset);
+            offset = av;
+            code = v;
+          } else if (field === 3 && wire === 2) {
+            const [l, al] = readVarint(view, offset);
+            offset = al;
+            message = new TextDecoder().decode(body.subarray(offset, offset + l));
+            offset += l;
+          } else break;
+        }
+        return { requestId, code, message };
+      }
+
+      const subStatus = document.getElementById("sub-status");
+      const pubStatus = document.getElementById("pub-status");
+      const pubLog = document.getElementById("pub-log");
+      const rows = document.getElementById("rows");
+      const startBtn = document.getElementById("start");
+      const stopBtn = document.getElementById("stop");
+      const badBtn = document.getElementById("bad");
+
+      const url = `ws://${location.hostname || "127.0.0.1"}:7000/connect/v1`;
+      const ws = new WebSocket(url);
+      ws.binaryType = "arraybuffer";
+      let nextRequestId = 1;
+      const channels = ["prices.btcusd", "prices.ethusd"];
+
+      const symbols = {
+        "prices.btcusd": { last: 65000, history: [] },
+        "prices.ethusd": { last: 3500, history: [] },
+      };
+      const rowEls = new Map();
+
+      function ensureRow(symbol) {
+        let el = rowEls.get(symbol);
+        if (el) return el;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${symbol}</td><td class="right last">—</td><td class="right offset">—</td><td><svg viewBox="0 0 100 30" preserveAspectRatio="none"><polyline fill="none" stroke="currentColor" stroke-width="1"/></svg></td>`;
+        rows.appendChild(tr);
+        el = {
+          last: tr.querySelector(".last"),
+          offset: tr.querySelector(".offset"),
+          poly: tr.querySelector("polyline"),
+          history: [],
+          previous: null,
+        };
+        rowEls.set(symbol, el);
+        return el;
+      }
+
+      function paint(symbol, price, offset) {
+        const row = ensureRow(symbol);
+        const prev = row.previous;
+        row.previous = price;
+        row.last.textContent = price.toFixed(2);
+        row.last.classList.remove("up", "down");
+        if (prev !== null) row.last.classList.add(price >= prev ? "up" : "down");
+        row.offset.textContent = offset;
+        row.history.push(price);
+        if (row.history.length > 32) row.history.shift();
+        const min = Math.min(...row.history);
+        const max = Math.max(...row.history);
+        const span = max - min || 1;
+        const points = row.history
+          .map((p, i) => `${(i / Math.max(row.history.length - 1, 1)) * 100},${30 - ((p - min) / span) * 28 - 1}`)
+          .join(" ");
+        row.poly.setAttribute("points", points);
+      }
+
+      ws.addEventListener("open", () => {
+        subStatus.textContent = "connected — subscribing";
+        for (const ch of channels) ws.send(buildSubscribe(nextRequestId++, ch));
+      });
+      ws.addEventListener("close", () => (subStatus.textContent = "closed"));
+      ws.addEventListener("error", () => (subStatus.textContent = "error"));
+      ws.addEventListener("message", (event) => {
+        const bytes = new Uint8Array(event.data);
+        const frame = decodeServerFrame(bytes);
+        if (frame.kind !== "frame") return;
+        if (frame.field === 1) {
+          subStatus.textContent = "subscribed";
+        } else if (frame.field === 3) {
+          const pub = decodePublication(frame.body);
+          try {
+            const tick = JSON.parse(new TextDecoder().decode(pub.data));
+            paint(tick.symbol, tick.price, pub.offset);
+          } catch (err) {
+            console.warn("malformed publication", err);
+          }
+        } else if (frame.field === 4) {
+          const err = decodeError(frame.body);
+          const line = document.createElement("div");
+          line.className = "err";
+          line.textContent = `Error code=${err.code} req=${err.requestId} msg=${err.message}`;
+          pubLog.prepend(line);
+        }
+      });
+
+      function step(symbol) {
+        const state = symbols[symbol];
+        const drift = (Math.random() - 0.5) * (state.last * 0.005);
+        state.last = Math.max(1, state.last + drift);
+        const tick = { symbol: symbol.split(".")[1].toUpperCase(), price: Number(state.last.toFixed(2)), ts: Date.now() };
+        ws.send(buildPublish(nextRequestId++, symbol, new TextEncoder().encode(JSON.stringify(tick))));
+      }
+
+      let timer = null;
+      startBtn.addEventListener("click", () => {
+        if (timer) return;
+        if (ws.readyState !== WebSocket.OPEN) {
+          pubStatus.textContent = "waiting for socket…";
+          return;
+        }
+        pubStatus.textContent = "ticking";
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        timer = setInterval(() => {
+          for (const ch of channels) step(ch);
+        }, 250);
+      });
+      stopBtn.addEventListener("click", () => {
+        if (!timer) return;
+        clearInterval(timer);
+        timer = null;
+        pubStatus.textContent = "stopped";
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+      });
+      badBtn.addEventListener("click", () => {
+        const bad = JSON.stringify({ symbol: "BTC", ts: Date.now() }); // missing price
+        ws.send(buildPublish(nextRequestId++, "prices.btcusd", new TextEncoder().encode(bad)));
+        const line = document.createElement("div");
+        line.className = "meta";
+        line.textContent = "→ sent malformed tick (missing price field); expecting Error code=5";
+        pubLog.prepend(line);
+      });
+    </script>
+  </body>
+</html>
