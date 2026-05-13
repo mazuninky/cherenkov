@@ -79,14 +79,13 @@ async fn schema_validation_end_to_end() {
 
     // Subscribe to the validated namespace.
     client
-        .send(Message::Binary(
-            encode_client(&ClientFrame::Subscribe(Subscribe {
+        .send(Message::Binary(encode_client(&ClientFrame::Subscribe(
+            Subscribe {
                 request_id: 1,
                 channel: "orders.created".to_owned(),
                 since_offset: 0,
-            }))
-            .to_vec(),
-        ))
+            },
+        ))))
         .await
         .expect("subscribe send");
     match next_frame(&mut client).await {
@@ -97,14 +96,13 @@ async fn schema_validation_end_to_end() {
     // 1. Valid payload — broadcast back to the same client (it is a
     // subscriber, so the publication should round-trip).
     client
-        .send(Message::Binary(
-            encode_client(&ClientFrame::Publish(Publish {
+        .send(Message::Binary(encode_client(&ClientFrame::Publish(
+            Publish {
                 request_id: 2,
                 channel: "orders.created".to_owned(),
                 data: Bytes::from_static(br#"{"sku":"abc","qty":3}"#),
-            }))
-            .to_vec(),
-        ))
+            },
+        ))))
         .await
         .expect("publish send (valid)");
     match next_frame(&mut client).await {
@@ -118,14 +116,13 @@ async fn schema_validation_end_to_end() {
     // 2. Malformed payload — Error frame with ValidationFailed code,
     // request_id echoed.
     client
-        .send(Message::Binary(
-            encode_client(&ClientFrame::Publish(Publish {
+        .send(Message::Binary(encode_client(&ClientFrame::Publish(
+            Publish {
                 request_id: 7,
                 channel: "orders.created".to_owned(),
                 data: Bytes::from_static(br#"{"sku":""}"#),
-            }))
-            .to_vec(),
-        ))
+            },
+        ))))
         .await
         .expect("publish send (invalid)");
     match next_frame(&mut client).await {
@@ -139,14 +136,13 @@ async fn schema_validation_end_to_end() {
 
     // 3. Namespace without a declared schema is opaque pass-through.
     client
-        .send(Message::Binary(
-            encode_client(&ClientFrame::Subscribe(Subscribe {
+        .send(Message::Binary(encode_client(&ClientFrame::Subscribe(
+            Subscribe {
                 request_id: 11,
                 channel: "rooms.lobby".to_owned(),
                 since_offset: 0,
-            }))
-            .to_vec(),
-        ))
+            },
+        ))))
         .await
         .expect("subscribe send (opaque)");
     match next_frame(&mut client).await {
@@ -154,16 +150,15 @@ async fn schema_validation_end_to_end() {
         other => panic!("expected SubscribeOk for rooms.lobby, got {other:?}"),
     }
     client
-        .send(Message::Binary(
-            encode_client(&ClientFrame::Publish(Publish {
+        .send(Message::Binary(encode_client(&ClientFrame::Publish(
+            Publish {
                 request_id: 12,
                 channel: "rooms.lobby".to_owned(),
                 // Deliberately not JSON: the registry must pass it through
                 // because rooms has no schema.
                 data: Bytes::from_static(b"\x00\x01\x02"),
-            }))
-            .to_vec(),
-        ))
+            },
+        ))))
         .await
         .expect("publish send (opaque)");
     match next_frame(&mut client).await {

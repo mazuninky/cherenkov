@@ -155,7 +155,7 @@ async fn handle_socket(socket: WebSocket, state: AppState) {
     let mut writer_task = tokio::spawn(async move {
         while let Some(frame) = rx.recv().await {
             let bytes = encode_server(&frame);
-            if writer.send(Message::Binary(bytes.to_vec())).await.is_err() {
+            if writer.send(Message::Binary(bytes)).await.is_err() {
                 break;
             }
         }

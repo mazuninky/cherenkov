@@ -69,7 +69,7 @@ async fn expect_error(c: &mut WsClient, code: ErrorCode) -> ProtocolError {
 
 async fn send(c: &mut WsClient, frame: ClientFrame) {
     let bytes = encode_client(&frame);
-    c.send(Message::Binary(bytes.to_vec())).await.expect("send");
+    c.send(Message::Binary(bytes)).await.expect("send");
 }
 
 fn build_config() -> ServerConfig {

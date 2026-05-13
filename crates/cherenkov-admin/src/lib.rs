@@ -108,15 +108,15 @@ pub fn router(resources: AdminResources) -> Router {
             get(list_sessions),
         )
         .route(
-            &format!("{DEFAULT_API_PREFIX}/sessions/:id"),
+            &format!("{DEFAULT_API_PREFIX}/sessions/{{id}}"),
             get(get_session),
         )
         .route(
-            &format!("{DEFAULT_API_PREFIX}/sessions/:id/disconnect"),
+            &format!("{DEFAULT_API_PREFIX}/sessions/{{id}}/disconnect"),
             post(disconnect_session),
         )
         .route(
-            &format!("{DEFAULT_API_PREFIX}/channels/:channel/subscribers"),
+            &format!("{DEFAULT_API_PREFIX}/channels/{{channel}}/subscribers"),
             get(channel_subscribers),
         )
         .route(

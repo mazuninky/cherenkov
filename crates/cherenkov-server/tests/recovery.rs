@@ -47,14 +47,13 @@ async fn recovery_replays_retained_history() {
         .expect("publisher connects");
     for body in [b"m1", b"m2", b"m3"] {
         publisher
-            .send(Message::Binary(
-                encode_client(&ClientFrame::Publish(Publish {
+            .send(Message::Binary(encode_client(&ClientFrame::Publish(
+                Publish {
                     request_id: 9,
                     channel: "rooms.lobby".to_owned(),
                     data: Bytes::copy_from_slice(body),
-                }))
-                .to_vec(),
-            ))
+                },
+            ))))
             .await
             .unwrap();
     }
@@ -68,14 +67,13 @@ async fn recovery_replays_retained_history() {
         .await
         .expect("latecomer connects");
     latecomer
-        .send(Message::Binary(
-            encode_client(&ClientFrame::Subscribe(Subscribe {
+        .send(Message::Binary(encode_client(&ClientFrame::Subscribe(
+            Subscribe {
                 request_id: 2,
                 channel: "rooms.lobby".to_owned(),
                 since_offset: 1,
-            }))
-            .to_vec(),
-        ))
+            },
+        ))))
         .await
         .unwrap();
 

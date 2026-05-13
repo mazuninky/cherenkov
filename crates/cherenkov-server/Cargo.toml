@@ -50,7 +50,7 @@ base64 = { workspace = true }
 bytes.workspace = true
 futures.workspace = true
 jsonwebtoken.workspace = true
-reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream", "json"] }
+reqwest = { version = "0.13", default-features = false, features = ["rustls", "stream", "json"] }
 serde_json.workspace = true
 tempfile.workspace = true
 tokio-tungstenite = { workspace = true }
