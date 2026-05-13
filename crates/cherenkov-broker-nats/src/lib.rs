@@ -11,7 +11,7 @@
 
 use async_trait::async_trait;
 use cherenkov_core::{Broker, BrokerError, BrokerStream};
-use cherenkov_protocol::{decode_publication, encode_publication, Publication};
+use cherenkov_protocol::{Publication, decode_publication, encode_publication};
 use futures::StreamExt as _;
 use tracing::{debug, warn};
 

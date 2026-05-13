@@ -134,10 +134,10 @@ impl AclRule {
         if !self.action.covers(action) {
             return false;
         }
-        if let Some(subj) = &self.subject {
-            if !subj.is_match(&claims.subject) {
-                return false;
-            }
+        if let Some(subj) = &self.subject
+            && !subj.is_match(&claims.subject)
+        {
+            return false;
         }
         self.channel.is_match(channel)
     }

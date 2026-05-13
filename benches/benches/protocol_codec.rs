@@ -7,10 +7,10 @@
 
 use bytes::Bytes;
 use cherenkov_protocol::{
-    decode_client, decode_server, encode_client, encode_server, ClientFrame, Publication, Publish,
-    ServerFrame, Subscribe,
+    ClientFrame, Publication, Publish, ServerFrame, Subscribe, decode_client, decode_server,
+    encode_client, encode_server,
 };
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, black_box, criterion_group, criterion_main};
 
 const PAYLOAD_SIZES: &[usize] = &[64, 1_024, 16_384];
 

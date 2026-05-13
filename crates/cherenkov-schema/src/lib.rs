@@ -50,4 +50,4 @@
 
 mod registry;
 
-pub use registry::{namespace_of, JsonSchemaRegistry, JsonSchemaRegistryBuilder, RegistryError};
+pub use registry::{JsonSchemaRegistry, JsonSchemaRegistryBuilder, RegistryError, namespace_of};

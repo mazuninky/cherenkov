@@ -15,14 +15,14 @@
 use std::net::SocketAddr;
 
 use async_trait::async_trait;
-use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
+use axum::Router;
 use axum::extract::State;
+use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use axum::routing::get;
-use axum::Router;
 use cherenkov_core::{Hub, HubError, SessionId, Transport, TransportError};
 use cherenkov_protocol::{
-    decode_client, encode_server, ClientFrame, ErrorCode, ProtocolError, ServerFrame,
+    ClientFrame, ErrorCode, ProtocolError, ServerFrame, decode_client, encode_server,
 };
 use futures::{SinkExt as _, StreamExt as _};
 use tokio::net::TcpListener;

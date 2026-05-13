@@ -13,10 +13,10 @@ use std::time::Duration;
 
 use bytes::Bytes;
 use cherenkov_protocol::{
-    decode_server, encode_client, ClientFrame, ErrorCode, Publish, ServerFrame, Subscribe,
+    ClientFrame, ErrorCode, Publish, ServerFrame, Subscribe, decode_server, encode_client,
 };
 use cherenkov_server::{
-    run_with_listener, NamespaceConfig, NamespacesConfig, SchemaKind, ServerConfig,
+    NamespaceConfig, NamespacesConfig, SchemaKind, ServerConfig, run_with_listener,
 };
 use futures::{SinkExt as _, StreamExt as _};
 use serde_json::json;

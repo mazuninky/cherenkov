@@ -20,7 +20,7 @@ pub use auth::{AllowAllAuthenticator, AuthError, Authenticator, SessionClaims};
 pub use broker::{Broker, BrokerError, BrokerStream};
 pub use channel::{ChannelCursor, ChannelError, ChannelKind};
 pub use error::HubError;
-pub use hub::{namespace_of, Hub, HubBuilder, HubBuilt};
+pub use hub::{Hub, HubBuilder, HubBuilt, namespace_of};
 pub use schema::{AllowAllValidator, SchemaError, SchemaValidator};
 pub use session::{Session, SessionId, SessionRegistry};
 pub use transport::{Transport, TransportError};

@@ -10,13 +10,13 @@
 //! * `channel → Vec<SessionId>` — reverse index used by transports and
 //!   admin tooling to enumerate the local subscribers of a channel.
 
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use arc_swap::ArcSwapOption;
 use cherenkov_protocol::ServerFrame;
 use dashmap::DashMap;
-use tokio::sync::{mpsc, Notify};
+use tokio::sync::{Notify, mpsc};
 use tokio::task::JoinHandle;
 
 use crate::SessionClaims;

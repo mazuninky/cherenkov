@@ -7,7 +7,7 @@
 pub mod app;
 pub mod config;
 
-pub use app::{build_hub, run, run_with_listener, ServerError, ServerHandle, ServerRunHandle};
+pub use app::{ServerError, ServerHandle, ServerRunHandle, build_hub, run, run_with_listener};
 pub use config::{
     AclActionConfig, AclConfig, AclEffectConfig, AclRuleConfig, AdminConfig, AuthConfig,
     BrokerBackend, BrokerConfig, ChannelKindName, ChannelKindsConfig, NamespaceConfig,

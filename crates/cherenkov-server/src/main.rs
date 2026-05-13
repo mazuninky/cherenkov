@@ -112,9 +112,9 @@ async fn serve(config: ServerConfig) -> anyhow::Result<()> {
 }
 
 fn init_tracing(config: &ServerConfig) {
+    use tracing_subscriber::EnvFilter;
     use tracing_subscriber::layer::SubscriberExt as _;
     use tracing_subscriber::util::SubscriberInitExt as _;
-    use tracing_subscriber::EnvFilter;
 
     let filter = EnvFilter::try_new(&config.log.level)
         .or_else(|_| EnvFilter::try_new("info"))

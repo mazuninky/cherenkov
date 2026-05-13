@@ -12,7 +12,7 @@ use bytes::Bytes;
 use cherenkov_broker::MemoryBroker;
 use cherenkov_channel_pubsub::PubSubChannel;
 use cherenkov_core::{Hub, HubBuilder};
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use tokio::runtime::Runtime;
 use tokio::sync::mpsc;
 

@@ -26,12 +26,12 @@ use async_trait::async_trait;
 use bytes::BytesMut;
 use cherenkov_core::{Hub, SessionId, Transport, TransportError};
 use cherenkov_protocol::{
-    decode_client, encode_server, ClientFrame, ErrorCode, ProtocolError, ServerFrame,
+    ClientFrame, ErrorCode, ProtocolError, ServerFrame, decode_client, encode_server,
 };
 use thiserror::Error;
 use tokio::sync::mpsc;
 use tracing::{debug, info, warn};
-use wtransport::endpoint::{endpoint_side, IncomingSession};
+use wtransport::endpoint::{IncomingSession, endpoint_side};
 use wtransport::{Endpoint, Identity, ServerConfig};
 
 /// Default per-session outbox capacity, in frames.

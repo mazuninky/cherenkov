@@ -34,9 +34,9 @@
 pub mod frame;
 
 pub use frame::{
-    decode_client, decode_publication, decode_server, encode_client, encode_publication,
-    encode_server, ClientFrame, Connect, ConnectOk, DecodeError, ErrorCode, ProtocolError,
-    Publication, Publish, ServerFrame, Subscribe, SubscribeOk, Unsubscribe, UnsubscribeOk,
+    ClientFrame, Connect, ConnectOk, DecodeError, ErrorCode, ProtocolError, Publication, Publish,
+    ServerFrame, Subscribe, SubscribeOk, Unsubscribe, UnsubscribeOk, decode_client,
+    decode_publication, decode_server, encode_client, encode_publication, encode_server,
 };
 
 /// `prost`-generated Rust types from `proto/v1.proto`.

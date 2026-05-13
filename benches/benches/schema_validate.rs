@@ -10,7 +10,7 @@ use std::sync::Arc;
 use bytes::Bytes;
 use cherenkov_core::{AllowAllValidator, SchemaValidator};
 use cherenkov_schema::JsonSchemaRegistry;
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use serde_json::json;
 use tokio::runtime::Runtime;
 

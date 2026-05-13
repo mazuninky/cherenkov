@@ -9,8 +9,8 @@ use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use figment::providers::{Env, Format as _, Yaml};
 use figment::Figment;
+use figment::providers::{Env, Format as _, Yaml};
 use serde::Deserialize;
 use serde_json::Value as JsonValue;
 

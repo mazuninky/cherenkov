@@ -6,9 +6,9 @@ use std::time::Duration;
 
 use bytes::Bytes;
 use cherenkov_protocol::{
-    decode_server, encode_client, ClientFrame, Publish, ServerFrame, Subscribe,
+    ClientFrame, Publish, ServerFrame, Subscribe, decode_server, encode_client,
 };
-use cherenkov_server::{run_with_listener, ServerConfig};
+use cherenkov_server::{ServerConfig, run_with_listener};
 use futures::{SinkExt as _, StreamExt as _};
 use tokio::net::TcpStream;
 use tokio::time::timeout;

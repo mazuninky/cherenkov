@@ -6,7 +6,9 @@
 fn main() -> std::io::Result<()> {
     let protoc = protoc_bin_vendored::protoc_bin_path()
         .expect("protoc-bin-vendored ships a protoc binary for this platform");
-    std::env::set_var("PROTOC", protoc);
+    // SAFETY: build scripts run before any threads spawn, so racing with
+    // a concurrent getenv is not possible. Required by edition 2024.
+    unsafe { std::env::set_var("PROTOC", protoc) };
 
     println!("cargo:rerun-if-changed=proto/v1.proto");
     println!("cargo:rerun-if-changed=build.rs");

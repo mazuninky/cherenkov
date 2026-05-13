@@ -21,8 +21,8 @@
 use std::net::SocketAddr;
 
 use axum::extract::{Path, Request, State};
-use axum::http::{header, StatusCode};
-use axum::middleware::{from_fn_with_state, Next};
+use axum::http::{StatusCode, header};
+use axum::middleware::{Next, from_fn_with_state};
 use axum::response::{Html, IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
