@@ -22,20 +22,20 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use axum::Router;
 use axum::body::Body;
 use axum::extract::{Query, RawQuery, State};
-use axum::http::{header, HeaderMap, StatusCode};
+use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::sse::{Event, KeepAlive, Sse};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
-use axum::Router;
-use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD as BASE64;
 use bytes::Bytes;
 use cherenkov_core::{Hub, HubError, Transport, TransportError};
 use cherenkov_protocol::ServerFrame;
-use futures::stream::Stream;
 use futures::StreamExt as _;
+use futures::stream::Stream;
 use serde::Deserialize;
 use thiserror::Error;
 use tokio::net::TcpListener;
@@ -199,10 +199,10 @@ fn channels_from_raw_query(query: Option<&str>) -> Vec<String> {
         if k != "channel" {
             continue;
         }
-        if let Ok(decoded) = urlencoding_decode(v) {
-            if !decoded.is_empty() {
-                out.push(decoded);
-            }
+        if let Ok(decoded) = urlencoding_decode(v)
+            && !decoded.is_empty()
+        {
+            out.push(decoded);
         }
     }
     out

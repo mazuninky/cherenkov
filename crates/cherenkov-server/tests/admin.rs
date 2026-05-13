@@ -9,7 +9,7 @@
 
 use std::time::Duration;
 
-use cherenkov_server::{run, AdminConfig, ServerConfig};
+use cherenkov_server::{AdminConfig, ServerConfig, run};
 use futures::StreamExt as _;
 use tokio::time::timeout;
 use tokio_tungstenite::tungstenite::Message;

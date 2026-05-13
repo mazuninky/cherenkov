@@ -24,8 +24,8 @@ use cherenkov_protocol::Publication;
 use dashmap::DashMap;
 use futures::StreamExt as _;
 use tokio::sync::broadcast;
-use tokio_stream::wrappers::errors::BroadcastStreamRecvError;
 use tokio_stream::wrappers::BroadcastStream;
+use tokio_stream::wrappers::errors::BroadcastStreamRecvError;
 use tracing::warn;
 
 /// Default per-topic broadcast capacity.

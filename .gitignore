@@ -24,6 +24,7 @@ Cargo.lock.bak
 # committed; the workflow regenerates them on every run.
 /.claude/local-fix-*.jsonl
 /.claude/local-fix-*.log
+/.claude/scheduled_tasks.lock
 
 # Secrets — never commit these. CI runs gitleaks; this list is the
 # defence-in-depth layer (per docs/plan.md §8.10).

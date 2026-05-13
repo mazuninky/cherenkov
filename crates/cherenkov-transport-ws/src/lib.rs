@@ -15,14 +15,14 @@
 use std::net::SocketAddr;
 
 use async_trait::async_trait;
-use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
+use axum::Router;
 use axum::extract::State;
+use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use axum::routing::get;
-use axum::Router;
 use cherenkov_core::{Hub, HubError, SessionId, Transport, TransportError};
 use cherenkov_protocol::{
-    decode_client, encode_server, ClientFrame, ErrorCode, ProtocolError, ServerFrame,
+    ClientFrame, ErrorCode, ProtocolError, ServerFrame, decode_client, encode_server,
 };
 use futures::{SinkExt as _, StreamExt as _};
 use tokio::net::TcpListener;
@@ -155,7 +155,7 @@ async fn handle_socket(socket: WebSocket, state: AppState) {
     let mut writer_task = tokio::spawn(async move {
         while let Some(frame) = rx.recv().await {
             let bytes = encode_server(&frame);
-            if writer.send(Message::Binary(bytes.to_vec())).await.is_err() {
+            if writer.send(Message::Binary(bytes)).await.is_err() {
                 break;
             }
         }

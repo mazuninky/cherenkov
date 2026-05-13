@@ -23,8 +23,8 @@ members = [
 
 [workspace.package]
 version = "0.0.1-alpha.0"
-edition = "2021"
-rust-version = "1.88"
+edition = "2024"
+rust-version = "1.95"
 license = "MIT"
 repository = "https://github.com/mazuninky/cherenkov"
 homepage = "https://cherenkov.dev"
@@ -64,13 +64,13 @@ tokio-stream = { version = "0.1", features = ["sync"] }
 pin-project-lite = "0.2"
 
 # Wire protocol (docs/plan.md §3.2)
-prost = "0.13"
-prost-build = "0.13"
-prost-types = "0.13"
+prost = "0.14"
+prost-build = "0.14"
+prost-types = "0.14"
 
 # Transports (docs/plan.md §3.3)
-axum = { version = "0.7", features = ["ws"] }
-tokio-tungstenite = "0.24"
+axum = { version = "0.8", features = ["ws"] }
+tokio-tungstenite = "0.29"
 tower = "0.5"
 http = "1"
 http-body-util = "0.1"
@@ -85,15 +85,15 @@ serde_yaml = "0.9"
 serde_json = "1"
 
 # Schemas (docs/plan.md §3.6)
-jsonschema = { version = "0.28", default-features = false }
+jsonschema = { version = "0.46", default-features = false }
 
 # Auth (docs/plan.md §3.7)
-jsonwebtoken = "9"
+jsonwebtoken = { version = "10", features = ["rust_crypto"] }
 globset = "0.4"
 
 # CRDT engines (docs/plan.md §3.4)
-yrs = "0.21"
-automerge = "0.5"
+yrs = "0.26"
+automerge = "0.9"
 
 # Brokers (docs/plan.md §3.5)
 fred = { version = "10", default-features = false, features = ["i-pubsub", "subscriber-client"] }
@@ -104,7 +104,7 @@ clap = { version = "4", features = ["derive", "env"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["json", "env-filter", "fmt"] }
 metrics = "0.24"
-metrics-exporter-prometheus = { version = "0.16", default-features = false }
+metrics-exporter-prometheus = { version = "0.18", default-features = false }
 
 # Tests (docs/plan.md §3.10)
 proptest = "1"

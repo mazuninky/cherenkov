@@ -8,10 +8,12 @@ all-features = true
 
 [advisories]
 version = 2
-# RUSTSEC-2025-0057 (fxhash unmaintained) is transitive via automerge with
-# no upstream fix. Tracked in docs/postmortems; revisit when automerge
-# upgrades to rustc-hash.
-ignore = ["RUSTSEC-2025-0057"]
+# RUSTSEC-2023-0071 (rsa Marvin timing sidechannel) has no safe upgrade
+# upstream. Pulled in transitively by `jsonwebtoken 10` with the
+# `rust_crypto` feature. Our JWT usage is HS256/HS384/HS512 only — no
+# RSA private-key operations — so the Marvin variant is not
+# exploitable here. Revisit when RustCrypto/RSA ships a fix.
+ignore = ["RUSTSEC-2023-0071"]
 yanked = "deny"
 
 [licenses]

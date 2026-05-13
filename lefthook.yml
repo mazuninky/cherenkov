@@ -1,0 +1,26 @@
+# Pre-commit hooks. Install lefthook locally with one of:
+#   brew install lefthook
+#   cargo install lefthook
+#   npm install -g lefthook
+# Then run:
+#   lefthook install
+#
+# Hooks mirror the CI gates so a clean `git commit` implies a clean PR.
+pre-commit:
+  parallel: true
+  commands:
+    fmt-check:
+      run: cargo fmt --all -- --check
+    clippy:
+      run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+    test:
+      run: cargo test --workspace --all-features --locked --no-fail-fast
+    typos:
+      # Soft-skip when `typos` is not installed locally so contributors who
+      # only touch Rust never see a missing binary. CI always runs typos.
+      run: |
+        if command -v typos >/dev/null 2>&1; then
+          typos
+        else
+          echo "typos not on PATH — skipping spell-check (install: cargo install typos-cli)" >&2
+        fi

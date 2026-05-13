@@ -21,8 +21,8 @@
 use std::net::SocketAddr;
 
 use axum::extract::{Path, Request, State};
-use axum::http::{header, StatusCode};
-use axum::middleware::{from_fn_with_state, Next};
+use axum::http::{StatusCode, header};
+use axum::middleware::{Next, from_fn_with_state};
 use axum::response::{Html, IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
@@ -108,15 +108,15 @@ pub fn router(resources: AdminResources) -> Router {
             get(list_sessions),
         )
         .route(
-            &format!("{DEFAULT_API_PREFIX}/sessions/:id"),
+            &format!("{DEFAULT_API_PREFIX}/sessions/{{id}}"),
             get(get_session),
         )
         .route(
-            &format!("{DEFAULT_API_PREFIX}/sessions/:id/disconnect"),
+            &format!("{DEFAULT_API_PREFIX}/sessions/{{id}}/disconnect"),
             post(disconnect_session),
         )
         .route(
-            &format!("{DEFAULT_API_PREFIX}/channels/:channel/subscribers"),
+            &format!("{DEFAULT_API_PREFIX}/channels/{{channel}}/subscribers"),
             get(channel_subscribers),
         )
         .route(

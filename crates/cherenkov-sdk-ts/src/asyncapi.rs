@@ -5,7 +5,7 @@
 //! operations carrying the supplied JSON Schema as the payload.
 
 use anyhow::Result;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// Render an AsyncAPI 2.6 document covering `namespaces`.
 ///

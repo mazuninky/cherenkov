@@ -39,12 +39,18 @@ tokio = { workspace = true }
 tracing.workspace = true
 tracing-subscriber.workspace = true
 
+[target.'cfg(unix)'.dependencies]
+# Used in `main.rs` to restore the default SIGPIPE disposition so that
+# piping server output (logs) into `head` etc. exits cleanly instead of
+# crashing the tokio runtime on a broken pipe.
+libc = "0.2"
+
 [dev-dependencies]
 base64 = { workspace = true }
 bytes.workspace = true
 futures.workspace = true
 jsonwebtoken.workspace = true
-reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream", "json"] }
+reqwest = { version = "0.13", default-features = false, features = ["rustls", "stream", "json"] }
 serde_json.workspace = true
 tempfile.workspace = true
 tokio-tungstenite = { workspace = true }

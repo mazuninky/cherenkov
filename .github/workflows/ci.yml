@@ -2,9 +2,34 @@ name: ci
 
 on:
   push:
-    branches: [main]
+    branches: [master]
+    paths:
+      - "crates/**"
+      - "benches/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "clippy.toml"
+      - "deny.toml"
+      - ".typos.toml"
+      - "rust-toolchain.toml"
+      - "rustfmt.toml"
+      - ".github/workflows/**"
   pull_request:
-    branches: [main]
+    paths:
+      - "crates/**"
+      - "benches/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "clippy.toml"
+      - "deny.toml"
+      - ".typos.toml"
+      - "rust-toolchain.toml"
+      - "rustfmt.toml"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 # Cancel in-progress runs on the same branch when a new push lands.
 concurrency:
@@ -13,17 +38,25 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  RUST_BACKTRACE: 1
+  RUST_BACKTRACE: short
   # rust-toolchain.toml pins the channel; CI honours it via rustup.
   RUSTFLAGS: "-D warnings"
 
 jobs:
+  typos:
+    name: typos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Spell-check
+        uses: crate-ci/typos@ca8395668a014bffeb39e0463c660f958402e0ff # v1.46.1
+
   fmt:
     name: fmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
         with:
           components: rustfmt
       - name: cargo fmt --check
@@ -33,23 +66,34 @@ jobs:
     name: clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
         with:
           components: clippy
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@23869a5bd66c73db3c0ac40331f3206eb23791dc # v2.9.1
+        with:
+          shared-key: debug-ubuntu
+          save-if: ${{ github.ref == 'refs/heads/master' }}
       - name: cargo clippy
-        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+        run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 
   test:
-    name: test
-    runs-on: ubuntu-latest
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Cross-OS on push to master; PRs run Linux only to keep feedback fast.
+        os: ${{ github.event_name == 'push' && fromJSON('["ubuntu-latest","macos-latest","windows-latest"]') || fromJSON('["ubuntu-latest"]') }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
+      - uses: Swatinem/rust-cache@23869a5bd66c73db3c0ac40331f3206eb23791dc # v2.9.1
+        with:
+          shared-key: ${{ runner.os == 'Linux' && 'debug-ubuntu' || format('test-{0}', matrix.os) }}
+          save-if: ${{ github.ref == 'refs/heads/master' }}
       - name: cargo test
-        run: cargo test --workspace --all-features --no-fail-fast
+        run: cargo test --workspace --all-features --locked --no-fail-fast
 
   doc:
     name: doc
@@ -57,29 +101,53 @@ jobs:
     env:
       RUSTDOCFLAGS: "-D warnings"
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
+      - uses: Swatinem/rust-cache@23869a5bd66c73db3c0ac40331f3206eb23791dc # v2.9.1
+        with:
+          shared-key: debug-ubuntu
+          save-if: ${{ github.ref == 'refs/heads/master' }}
       - name: cargo doc
         run: cargo doc --workspace --no-deps
+
+  msrv:
+    name: msrv (1.95)
+    runs-on: ubuntu-latest
+    # RUSTUP_TOOLCHAIN overrides rust-toolchain.toml so this job exercises
+    # the declared MSRV rather than the pinned toolchain.
+    env:
+      RUSTUP_TOOLCHAIN: "1.95"
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
+        with:
+          toolchain: "1.95"
+      - uses: Swatinem/rust-cache@23869a5bd66c73db3c0ac40331f3206eb23791dc # v2.9.1
+        with:
+          shared-key: msrv
+          save-if: ${{ github.ref == 'refs/heads/master' }}
+      - name: cargo check
+        run: cargo check --workspace --all-targets --locked
 
   deny:
     name: deny
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: EmbarkStudios/cargo-deny-action@v2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: EmbarkStudios/cargo-deny-action@0105f7c440bc8084c17cad47fe92e63049519458 # v2.0.18
         with:
           command: check
-          # The full set of cargo-deny checks: advisories, bans, licenses,
+          # Full set of cargo-deny checks: advisories, bans, licenses,
           # sources. Configured by deny.toml at the repo root.
-          arguments: ""
+          arguments: --all-features
 
-  audit:
-    name: audit
+  ci-success:
+    name: ci-success
+    needs: [typos, fmt, clippy, test, doc, msrv, deny]
     runs-on: ubuntu-latest
+    if: always()
     steps:
-      - uses: actions/checkout@v4
-      - uses: rustsec/audit-check@v2.0.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Fail if any dependency failed
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        run: exit 1
+      - run: echo "All CI checks passed"

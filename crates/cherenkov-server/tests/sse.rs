@@ -6,9 +6,9 @@
 
 use std::time::Duration;
 
-use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
-use cherenkov_server::{run, ServerConfig, SseConfig};
+use base64::engine::general_purpose::STANDARD as BASE64;
+use cherenkov_server::{ServerConfig, SseConfig, run};
 use futures::StreamExt as _;
 use tokio::time::timeout;
 

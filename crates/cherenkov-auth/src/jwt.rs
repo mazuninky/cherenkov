@@ -7,7 +7,7 @@
 
 use async_trait::async_trait;
 use cherenkov_core::{AuthError, Authenticator, SessionClaims};
-use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
+use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode};
 use serde::Deserialize;
 
 /// JWT signing algorithm.
@@ -152,7 +152,7 @@ impl Authenticator for JwtAuthenticator {
 
 #[cfg(test)]
 mod tests {
-    use jsonwebtoken::{encode, EncodingKey, Header};
+    use jsonwebtoken::{EncodingKey, Header, encode};
     use serde_json::json;
 
     use super::*;

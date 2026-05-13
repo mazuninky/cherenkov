@@ -9,9 +9,9 @@ use std::time::Duration;
 
 use bytes::Bytes;
 use cherenkov_protocol::{
-    decode_server, encode_client, ClientFrame, Publication, Publish, ServerFrame, Subscribe,
+    ClientFrame, Publication, Publish, ServerFrame, Subscribe, decode_server, encode_client,
 };
-use cherenkov_server::{run_with_listener, ServerConfig};
+use cherenkov_server::{ServerConfig, run_with_listener};
 use futures::{SinkExt as _, StreamExt as _};
 use tokio::net::TcpStream;
 use tokio::time::timeout;
@@ -82,10 +82,10 @@ async fn two_clients_observe_fan_out() {
         since_offset: 0,
     }));
     alice
-        .send(Message::Binary(sub_alice.to_vec()))
+        .send(Message::Binary(sub_alice))
         .await
         .expect("alice subscribe");
-    bob.send(Message::Binary(sub_bob.to_vec()))
+    bob.send(Message::Binary(sub_bob))
         .await
         .expect("bob subscribe");
 
@@ -98,7 +98,7 @@ async fn two_clients_observe_fan_out() {
         data: Bytes::from_static(b"hello"),
     }));
     alice
-        .send(Message::Binary(publish.to_vec()))
+        .send(Message::Binary(publish))
         .await
         .expect("alice publishes");
 

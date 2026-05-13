@@ -55,8 +55,8 @@ pub mod prelude {
         Session, SessionClaims, SessionId, SessionRegistry, Transport, TransportError,
     };
     pub use cherenkov_protocol::{
-        decode_client, decode_server, encode_client, encode_server, ClientFrame, Connect,
-        ConnectOk, ErrorCode, ProtocolError, Publication, Publish, ServerFrame, Subscribe,
-        SubscribeOk, Unsubscribe, UnsubscribeOk,
+        ClientFrame, Connect, ConnectOk, ErrorCode, ProtocolError, Publication, Publish,
+        ServerFrame, Subscribe, SubscribeOk, Unsubscribe, UnsubscribeOk, decode_client,
+        decode_server, encode_client, encode_server,
     };
 }

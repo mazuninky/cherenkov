@@ -13,14 +13,14 @@ use std::time::Duration;
 
 use bytes::Bytes;
 use cherenkov_protocol::{
-    decode_server, encode_client, ClientFrame, Connect, ErrorCode, ProtocolError, Publish,
-    ServerFrame, Subscribe,
+    ClientFrame, Connect, ErrorCode, ProtocolError, Publish, ServerFrame, Subscribe, decode_server,
+    encode_client,
 };
 use cherenkov_server::{
-    run_with_listener, AclConfig, AclEffectConfig, AclRuleConfig, AuthConfig, ServerConfig,
+    AclConfig, AclEffectConfig, AclRuleConfig, AuthConfig, ServerConfig, run_with_listener,
 };
 use futures::{SinkExt as _, StreamExt as _};
-use jsonwebtoken::{encode as jwt_encode, Algorithm, EncodingKey, Header};
+use jsonwebtoken::{Algorithm, EncodingKey, Header, encode as jwt_encode};
 use serde_json::json;
 use tokio::net::TcpStream;
 use tokio::time::timeout;
@@ -69,7 +69,7 @@ async fn expect_error(c: &mut WsClient, code: ErrorCode) -> ProtocolError {
 
 async fn send(c: &mut WsClient, frame: ClientFrame) {
     let bytes = encode_client(&frame);
-    c.send(Message::Binary(bytes.to_vec())).await.expect("send");
+    c.send(Message::Binary(bytes)).await.expect("send");
 }
 
 fn build_config() -> ServerConfig {

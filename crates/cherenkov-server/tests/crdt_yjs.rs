@@ -10,9 +10,9 @@ use std::time::Duration;
 
 use bytes::Bytes;
 use cherenkov_protocol::{
-    decode_server, encode_client, ClientFrame, Publish, ServerFrame, Subscribe,
+    ClientFrame, Publish, ServerFrame, Subscribe, decode_server, encode_client,
 };
-use cherenkov_server::{run_with_listener, ChannelKindName, ChannelKindsConfig, ServerConfig};
+use cherenkov_server::{ChannelKindName, ChannelKindsConfig, ServerConfig, run_with_listener};
 use futures::{SinkExt as _, StreamExt as _};
 use tokio::net::TcpStream;
 use tokio::time::timeout;
@@ -57,12 +57,8 @@ async fn yjs_namespace_round_trips_updates() {
         channel: "doc.shared".to_owned(),
         since_offset: 0,
     });
-    a.send(Message::Binary(encode_client(&sub).to_vec()))
-        .await
-        .unwrap();
-    b.send(Message::Binary(encode_client(&sub).to_vec()))
-        .await
-        .unwrap();
+    a.send(Message::Binary(encode_client(&sub))).await.unwrap();
+    b.send(Message::Binary(encode_client(&sub))).await.unwrap();
     assert!(matches!(
         next_server_frame(&mut a).await,
         ServerFrame::SubscribeOk(_)
@@ -80,14 +76,13 @@ async fn yjs_namespace_round_trips_updates() {
     let update = txn.encode_update_v1();
     drop(txn);
 
-    a.send(Message::Binary(
-        encode_client(&ClientFrame::Publish(Publish {
+    a.send(Message::Binary(encode_client(&ClientFrame::Publish(
+        Publish {
             request_id: 2,
             channel: "doc.shared".to_owned(),
             data: Bytes::from(update.clone()),
-        }))
-        .to_vec(),
-    ))
+        },
+    ))))
     .await
     .unwrap();
 

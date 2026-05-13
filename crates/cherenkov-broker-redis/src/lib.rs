@@ -14,12 +14,12 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use cherenkov_core::{Broker, BrokerError, BrokerStream};
-use cherenkov_protocol::{decode_publication, encode_publication, Publication};
+use cherenkov_protocol::{Publication, decode_publication, encode_publication};
 use fred::clients::SubscriberClient;
 use fred::interfaces::{ClientLike, EventInterface, PubsubInterface};
 use fred::prelude::*;
-use fred::types::config::Config as FredConfig;
 use fred::types::Value as FredValue;
+use fred::types::config::Config as FredConfig;
 use futures::StreamExt as _;
 use tokio_stream::wrappers::BroadcastStream;
 use tracing::{debug, warn};
