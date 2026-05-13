@@ -46,7 +46,7 @@ fan-out is O(subscribers) and lock contention is bounded.
 - **THEN** the reverse index returns exactly those N session ids and no
   others, even under concurrent subscribe/unsubscribe traffic
 
-### Requirement: Errors are typed and contextful
+### Requirement: Errors are typed and contextual
 The crate SHALL define a `HubError` enum via `thiserror`, with variants
 that carry enough context to diagnose without a stack trace (per
 `docs/plan.md` §4.3). The crate SHALL NOT use `anyhow`.

@@ -1,0 +1,20 @@
+[default]
+extend-ignore-re = [
+  # Hex blobs in test vectors, prost-generated identifiers, etc.
+  "[0-9a-fA-F]{16,}",
+]
+
+[default.extend-words]
+# Domain terms commonly flagged.
+crate = "crate"
+crates = "crates"
+nd = "nd"
+
+[files]
+extend-exclude = [
+  "Cargo.lock",
+  "target/",
+  "crates/cherenkov-sdk-ts/dist/",
+  "crates/cherenkov-protocol/proto/",
+  "openspec/changes/archive/",
+]

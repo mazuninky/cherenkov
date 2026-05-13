@@ -221,7 +221,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn unparseable_json_rejected() {
+    async fn unparsable_json_rejected() {
         let r = build_registry();
         let bad = Bytes::from_static(b"\x00not json");
         let err = r

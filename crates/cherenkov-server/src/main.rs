@@ -14,6 +14,11 @@ use clap::Parser;
 use tokio::signal;
 use tracing::{error, info};
 
+mod exit_code {
+    pub const RUNTIME_ERROR: u8 = 1;
+    pub const CONFIG_ERROR: u8 = 3;
+}
+
 #[derive(Debug, Parser)]
 #[command(name = "cherenkov-server", version, about)]
 struct Args {
@@ -23,13 +28,39 @@ struct Args {
 }
 
 fn main() -> ExitCode {
+    reset_sigpipe();
     let args = Args::parse();
     match run_cli(args) {
         Ok(()) => ExitCode::SUCCESS,
         Err(err) => {
             eprintln!("cherenkov-server: {err:#}");
-            ExitCode::FAILURE
+            ExitCode::from(exit_code_for_error(&err))
         }
+    }
+}
+
+/// Restore the default SIGPIPE disposition on Unix so that piping server
+/// logs into commands like `head` produces a clean exit on broken pipe
+/// rather than aborting the tokio runtime mid-write.
+#[cfg(unix)]
+fn reset_sigpipe() {
+    // SAFETY: setting a signal disposition before any threads are spawned
+    // is sound; this runs as the very first thing in `main()`.
+    unsafe {
+        libc::signal(libc::SIGPIPE, libc::SIG_DFL);
+    }
+}
+
+#[cfg(not(unix))]
+fn reset_sigpipe() {}
+
+/// Map an error to a POSIX exit code so operators can distinguish config
+/// problems (3) from runtime failures (1) in supervisors / systemd.
+fn exit_code_for_error(err: &anyhow::Error) -> u8 {
+    if err.chain().any(|c| c.is::<figment::Error>()) {
+        exit_code::CONFIG_ERROR
+    } else {
+        exit_code::RUNTIME_ERROR
     }
 }
 

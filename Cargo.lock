@@ -714,6 +714,7 @@ dependencies = [
  "figment",
  "futures",
  "jsonwebtoken",
+ "libc",
  "metrics",
  "metrics-exporter-prometheus",
  "reqwest",
